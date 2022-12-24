@@ -3,4 +3,6 @@ AmeJump (Doodle Jump clone)
 
 Đây là đồ án game nhập môn lập trình
 
-Chắc chắn là TeAmwOrk
+Từ Trường ĐH Khoa học Tự Nhiên - ĐHQG TPHCM
+
+Khóa 2022 - 2026
