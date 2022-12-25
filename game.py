@@ -29,7 +29,7 @@ class Button():
         surface.blit(self.text, (self.rect1.x + self.width / 2, self.rect1.y + self.height / 2))
         return action
 
-class DoodleJump:
+class AmeJump:
     def __init__(self):
         self.screen = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("AmeJump")
@@ -39,7 +39,7 @@ class DoodleJump:
         pygame.font.init()
         pygame.mixer.init()
         self.score = 0
-        self.font = pygame.font.SysFont("font/DoodleJump.ttf", 25)
+        self.font = pygame.font.Font("font/DoodleJump.ttf", 25)
         self.blue = pygame.image.load("assets/blue.png").convert_alpha()
         self.red = pygame.image.load("assets/red.png").convert_alpha()
         self.red_1 = pygame.image.load("assets/red_1.png").convert_alpha()
@@ -59,16 +59,23 @@ class DoodleJump:
         self.gravity = 0
         self.xmovement = 0
         self.gameover = False
-        self.font1 = pygame.font.SysFont("font/DoodleJump.ttf", 125)
+        self.font1 = pygame.font.Font("font/DoodleJump.ttf", 105)
         self.buttonIMG = pygame.image.load("assets/menu_unselected.png").convert_alpha()
         self.startBTN = Button(320, 280, self.buttonIMG, 1, "START")
-        self.tutoBTN = Button(320, 360, self.buttonIMG, 1, "HOW TO PLAY")
-        self.quitBTN = Button(320, 440, self.buttonIMG, 1, "QUIT")
+        self.tutoBTN = Button(320, 340, self.buttonIMG, 1, "HOW TO PLAY")
+        self.highscoreBTN = Button(320, 400, self.buttonIMG, 1, "HIGHSCORE")
+        self.gachaBTN = Button(320, 460, self.buttonIMG, 1, "GACHA")
+        self.quitBTN = Button(320, 520, self.buttonIMG, 1, "QUIT")
+        
         self.menuBTN = Button(320, 360, self.buttonIMG, 1, "MENU")
         self.restartBTN = Button(320, 280, self.buttonIMG, 1, "RESTART")
         self.continueBTN = Button(320, 280, self.buttonIMG, 1, "CONTINUE")
         self.continue1BTN = Button(320, 540, self.buttonIMG, 1, "CONTINUE")
+        
+        self.rollBTN = Button(320, 420, self.buttonIMG, 1, "ROLL")
+        self.galleryBTN = Button(320, 480, self.buttonIMG, 1, "GALLERY")
         self.backBTN = Button(320, 540, self.buttonIMG, 1, "BACK")
+        
         self.doggo = pygame.image.load("assets/doggo.png").convert_alpha()
         self.doggos = []
         self.life = 1
@@ -77,6 +84,30 @@ class DoodleJump:
         self.dogStatus = True
         self.boxStatus = True
         self.rickRolled = pygame.image.load("assets/AmeRolled.png").convert_alpha()
+        self.gachaTicket = 0
+    
+    def updateHighScore(self):
+        scr_list = []
+        with open('highscore.txt','r') as f:
+            for scr in f.read().splitlines():
+                scr_list.append(scr)
+        for i in range(10):
+            if self.score > int(scr_list[i]):
+                for j in range(9, i, -1):
+                    scr_list[j] = scr_list[j - 1]
+                scr_list[i] = self.score
+                break
+        with open('highscore.txt', 'w') as f:        
+            for scr in scr_list:
+                f.write(str(scr) + "\n")
+                
+    def updateGachaTicket(self):
+        num = 0
+        with open('gacha_ticket.txt','r') as f:
+            for tck in f.read().splitlines():
+                num += int(tck) + self.gachaTicket
+        with open('gacha_ticket.txt', 'w') as f:
+            f.write(str(num) + "\n") 
         
     def updatePlayer(self):
         if not self.jump:        
@@ -235,6 +266,8 @@ class DoodleJump:
                     self.life += 1
                 elif number == 3:
                     self.gotAmeRolled() 
+                elif number == 4:
+                    self.gachaTicket += 1  
                 else:
                     self.score += 500
                 self.boxes.pop(len(self.boxes) - 1)
@@ -357,7 +390,10 @@ class DoodleJump:
                 self.doggos = []
                 self.boxes = []
                 self.gameover = False
-            elif self.gameover and self.life == 1:   
+            elif self.gameover and self.life == 1:
+                self.gachaTicket += self.score // 20000
+                self.updateGachaTicket()
+                self.updateHighScore()   
                 self.game_over()
             else:
                 self.drawGrid()
@@ -388,6 +424,10 @@ class DoodleJump:
                 self.run()
             if self.tutoBTN.draw(self.screen):
                 self.tutorials()
+            if self.highscoreBTN.draw(self.screen):
+                self.highscoreDisplay()
+            if self.gachaBTN.draw(self.screen):
+                self.gachaPage()
             if self.quitBTN.draw(self.screen):
                 quit()
                 
@@ -409,6 +449,120 @@ class DoodleJump:
             if self.backBTN.draw(self.screen):
                 self.menu()
             for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_b:
+                        self.menu()
+            pygame.display.update()
+            
+    def highscoreDisplay(self):
+        clock = pygame.time.Clock()
+        while True: 
+            self.screen.fill((255, 255, 255))
+            self.drawGrid()
+            clock.tick(60)
+            scr_list = []
+            with open('highscore.txt','r') as f:
+                for scr in f.read().splitlines():
+                    scr_list.append(scr)
+            self.text = self.font1.render("HIGHSCORE", True, (0, 0, 0))
+            self.screen.blit(self.text, (280 // 2, 200 // 2))
+            h = 200
+            for scr in scr_list:
+                self.text = self.font.render(scr, True, (0, 0, 0))
+                self.screen.blit(self.text, (375, h))
+                h += 25
+            if self.backBTN.draw(self.screen):
+                self.menu()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_b:
+                        self.menu()
+            pygame.display.update()
+            
+    def gachaPage(self):
+        self.image = pygame.image.load("gacha_img/LOCKED.png").convert_alpha()
+        self.text2 = self.font1.render("", True, (0, 0, 0))
+        clock = pygame.time.Clock()
+        while True: 
+            self.screen.fill((255, 255, 255))
+            self.drawGrid()
+            clock.tick(60)
+            self.text = self.font1.render("GACHA STORE", True, (0, 0, 0))
+            self.screen.blit(self.text, (240 // 2, 100 // 2))
+            self.screen.blit(self.image, (330, 200))
+            self.screen.blit(self.text2, (120, 250))
+            num = 0
+            with open('gacha_ticket.txt','r') as f:
+                for tck in f.read().splitlines():
+                    num = int(tck)
+            check = []
+            with open('gacha.txt','r') as f:
+                for tck in f.read().splitlines():
+                    check.append(int(tck))
+            self.text = self.font.render("Ticket: " + str(num), True, (0, 0, 0))
+            self.screen.blit(self.text, (375, 160))         
+            if self.backBTN.draw(self.screen):
+                self.menu()
+            if self.rollBTN.draw(self.screen):
+                #############################################
+                if num == 0:
+                    self.text2 = self.font1.render("OUT OF TICKET", True, (0, 0, 0))
+                    self.image = pygame.image.load("gacha_img/LOCKED.png").convert_alpha()
+                else:
+                    num -= 1
+                    ran = random.randint(1,100)
+                    if ran <= 5:    
+                        self.image = pygame.image.load("gacha_img/" + str(ran) + ".png").convert_alpha()
+                        check[ran - 1] = 1
+                    else:
+                        self.image = pygame.image.load("gacha_img/TACH.png").convert_alpha()
+                    with open('gacha_ticket.txt', 'w') as f:
+                        f.write(str(num) + "\n")
+                    with open('gacha.txt', 'w') as f:        
+                        for chk in check:
+                            f.write(str(chk) + "\n")
+                #############################################
+
+            if self.galleryBTN.draw(self.screen):
+                self.gallery()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_b:
+                        self.menu()
+            pygame.display.update()
+            
+    def gallery(self):
+        clock = pygame.time.Clock()
+        while True: 
+            self.screen.fill((255, 255, 255))
+            self.drawGrid()
+            clock.tick(60)
+            self.text = self.font1.render("GALLERY", True, (0, 0, 0))
+            self.screen.blit(self.text, (320 // 2, 100 // 2)) 
+            num = []
+            with open('gacha.txt','r') as f:
+                for tck in f.read().splitlines():
+                    num.append(int(tck))
+            for i in range(len(num)):
+                if num[i] == 0:
+                    self.image = pygame.image.load("gacha_img/LOCKED.png").convert_alpha()
+                    self.screen.blit(self.image, (30 + 150 * i, 250))
+                else:
+                    self.image = pygame.image.load("gacha_img/" + str(i+1) + ".png").convert_alpha()
+                    self.screen.blit(self.image, (30 + 150 * i, 250))
+            
+                     
+            if self.backBTN.draw(self.screen):
+                self.gachaPage()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_b:
                         self.menu()
@@ -416,4 +570,4 @@ class DoodleJump:
             
             
 ######################            
-DoodleJump().menu()
+AmeJump().menu()
