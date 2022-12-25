@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import sys
 import random
+from pygame import mixer
 
 class Button():
     def __init__(self, x, y, image, scale, text):
@@ -36,6 +37,7 @@ class DoodleJump:
         pygame.display.set_icon(pygame_icon)
         self.green = pygame.image.load("assets/green.png").convert_alpha()
         pygame.font.init()
+        pygame.mixer.init()
         self.score = 0
         self.font = pygame.font.SysFont("font/DoodleJump.ttf", 25)
         self.blue = pygame.image.load("assets/blue.png").convert_alpha()
@@ -65,9 +67,16 @@ class DoodleJump:
         self.menuBTN = Button(320, 360, self.buttonIMG, 1, "MENU")
         self.restartBTN = Button(320, 280, self.buttonIMG, 1, "RESTART")
         self.continueBTN = Button(320, 280, self.buttonIMG, 1, "CONTINUE")
+        self.continue1BTN = Button(320, 540, self.buttonIMG, 1, "CONTINUE")
         self.backBTN = Button(320, 540, self.buttonIMG, 1, "BACK")
         self.doggo = pygame.image.load("assets/doggo.png").convert_alpha()
         self.doggos = []
+        self.life = 1
+        self.box = pygame.image.load("assets/box.png").convert_alpha()
+        self.boxes = []
+        self.dogStatus = True
+        self.boxStatus = True
+        self.rickRolled = pygame.image.load("assets/AmeRolled.png").convert_alpha()
         
     def updatePlayer(self):
         if not self.jump:        
@@ -187,8 +196,11 @@ class DoodleJump:
             pygame.draw.line(self.screen, (222,222,222), (0, x * 12), (800, x * 12))
     
     def drawDoggo(self):
-        if self.score % 5000 == 0 and not self.score == 0:
-            self.doggos.append([0, self.cameray, False])
+        if self.score % 5000 == 0 and not self.score % 3000 == 0 and not self.score == 0 and self.dogStatus:
+            self.doggos.append([random.randint(100, 700), self.cameray, False])
+            self.dogStatus = False
+        elif self.score % 5000 != 0:
+            self.dogStatus = True
         if len(self.doggos) > 0:
             self.screen.blit(self.doggo, (self.doggos[len(self.doggos) - 1][0], self.doggos[len(self.doggos) - 1][1] - self.cameray))
             if self.doggos[len(self.doggos) - 1][0] >= 650:
@@ -204,6 +216,52 @@ class DoodleJump:
             rect = pygame.Rect(self.doggos[len(self.doggos) - 1][0], self.doggos[len(self.doggos) - 1][1], self.doggo.get_width(), self.doggo.get_height())
             if rect.colliderect(player):
                 self.gameover = True
+    
+    def drawGachaBox(self):
+        if self.score % 3000 == 0 and not self.score == 0 and self.boxStatus:
+            self.boxes.append([random.randint(100, 700), self.cameray])
+            self.boxStatus = False
+        elif self.score % 3000 != 0:
+            self.boxStatus = True
+        if len(self.boxes) > 0:
+            self.screen.blit(self.box, (self.boxes[len(self.boxes) - 1][0], self.boxes[len(self.boxes) - 1][1] - self.cameray))
+            player = pygame.Rect(self.playerx, self.playery, self.playerRight.get_width() - 10, self.playerRight.get_height())
+            rect = pygame.Rect(self.boxes[len(self.boxes) - 1][0], self.boxes[len(self.boxes) - 1][1], self.box.get_width(), self.box.get_height())
+            if rect.colliderect(player):
+                number = random.randint(1, 5)
+                if number == 1:
+                    self.gameover = True
+                elif number == 2:
+                    self.life += 1
+                elif number == 3:
+                    self.gotAmeRolled() 
+                else:
+                    self.score += 500
+                self.boxes.pop(len(self.boxes) - 1)
+           
+    def gotAmeRolled(self):
+        if not self.gameover:
+            clock = pygame.time.Clock()     
+            pygame.mixer.music.load("sound/rickroll.mp3")
+            pygame.mixer.music.play(-1)           
+            self.paused = True    
+            while self.paused:
+                self.screen.blit(self.rickRolled, (0, 0))
+                clock.tick(60)
+                if self.continue1BTN.draw(self.screen):
+                    pygame.mixer.music.load("sound/game.mp3")
+                    pygame.mixer.music.play(-1)
+                    self.paused = False
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        quit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_c:
+                            pygame.mixer.music.load("sound/game.mp3")
+                            pygame.mixer.music.play(-1)
+                            self.paused = False
+                pygame.display.update()
                 
     def pause(self):
         if not self.gameover:
@@ -228,19 +286,14 @@ class DoodleJump:
                         if event.key == pygame.K_c:
                             self.paused = False
                         elif event.key == pygame.K_m:
-                            self.cameray = 0
-                            self.score = 0
-                            self.springs = []
-                            self.platforms = [[400, 500, 0, 0]]
-                            self.generatePlatforms()
-                            self.playerx = 400
-                            self.playery = 400
                             self.gameover = False
                             self.menu()   
                 pygame.display.update() 
                 
     def game_over(self):
         clock = pygame.time.Clock()
+        pygame.mixer.music.load("sound/gameover.mp3")
+        pygame.mixer.music.play(0)
         while True:
             self.screen.fill((255, 255, 255))
             clock.tick(60)
@@ -270,7 +323,11 @@ class DoodleJump:
                               
     def run(self):
         clock = pygame.time.Clock()
+        pygame.mixer.music.load("sound/game.mp3")
+        pygame.mixer.music.play(-1)
         self.doggos = []
+        self.boxes = []
+        self.life = 2
         self.cameray = 0
         self.score = 0
         self.springs = []
@@ -290,7 +347,17 @@ class DoodleJump:
 
             if self.playery - self.cameray > 600:
                 self.gameover = True
-            if self.gameover:    
+            if self.gameover and self.life - 1 > 0 :
+                self.playery = self.cameray
+                self.playerx = 400
+                self.stuff = pygame.image.load("assets/right_1.png").convert_alpha()
+                self.screen.blit(self.stuff, (self.playerx, self.playery))
+                pygame.time.delay(600)
+                self.life -= 1
+                self.doggos = []
+                self.boxes = []
+                self.gameover = False
+            elif self.gameover and self.life == 1:   
                 self.game_over()
             else:
                 self.drawGrid()
@@ -298,13 +365,21 @@ class DoodleJump:
                 self.updatePlayer()
                 self.updatePlatforms()
                 self.drawDoggo()
-                self.screen.blit(self.font.render(str(self.score), -1, (0, 0, 0)), (25, 25))
+                self.drawGachaBox()
+                self.screen.blit(self.font.render("Score: " + str(self.score), -1, (0, 0, 0)), (25, 25))
+                self.screen.blit(self.font.render("Life: " + str(self.life), -1, (0, 0, 0)), (25, 50))
             pygame.display.flip() 
             
     def menu(self):
         clock = pygame.time.Clock()
+        pygame.mixer.music.load("sound/menu.mp3")
+        pygame.mixer.music.play(-1)
         while True:
             self.screen.fill((255, 255, 255))
+            self.image1 = pygame.image.load("assets/ameplaying2.png")
+            self.screen.blit(self.image1, (10, 200))
+            self.image2 = pygame.image.load("assets/ameplaying.png")
+            self.screen.blit(self.image2, (510, 150))
             self.drawGrid()
             self.image = pygame.image.load("assets/logo.png")
             self.screen.blit(self.image, (300, 50))
