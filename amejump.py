@@ -61,10 +61,12 @@ class AmeJump:
         self.gameover = False
         self.font1 = pygame.font.Font("font/DoodleJump.ttf", 105)
         self.buttonIMG = pygame.image.load("assets/menu_unselected.png").convert_alpha()
-        self.startBTN = Button(320, 280, self.buttonIMG, 1, "START")
-        self.tutoBTN = Button(320, 340, self.buttonIMG, 1, "HOW TO PLAY")
-        self.highscoreBTN = Button(320, 400, self.buttonIMG, 1, "HIGHSCORE")
-        self.gachaBTN = Button(320, 460, self.buttonIMG, 1, "GACHA")
+        
+        self.startBTN = Button(320, 220, self.buttonIMG, 1, "START")
+        self.tutoBTN = Button(320, 280, self.buttonIMG, 1, "HOW TO PLAY")
+        self.highscoreBTN = Button(320, 340, self.buttonIMG, 1, "HIGHSCORE")
+        self.gachaBTN = Button(320, 400, self.buttonIMG, 1, "GACHA")
+        self.creditBTN = Button(320, 460, self.buttonIMG, 1, "CREDITS")
         self.quitBTN = Button(320, 520, self.buttonIMG, 1, "QUIT")
         
         self.menuBTN = Button(320, 360, self.buttonIMG, 1, "MENU")
@@ -76,6 +78,8 @@ class AmeJump:
         self.galleryBTN = Button(320, 480, self.buttonIMG, 1, "GALLERY")
         self.backBTN = Button(320, 540, self.buttonIMG, 1, "BACK")
         
+        self.skipBTN = Button(320, 480, self.buttonIMG, 1, "SKIP")
+        
         self.doggo = pygame.image.load("assets/doggo.png").convert_alpha()
         self.doggos = []
         self.life = 1
@@ -85,6 +89,13 @@ class AmeJump:
         self.boxStatus = True
         self.rickRolled = pygame.image.load("assets/AmeRolled.png").convert_alpha()
         self.gachaTicket = 0
+        
+        self.bulletL = pygame.image.load("assets/bulletL.png").convert_alpha()
+        self.bulletR = pygame.image.load("assets/bulletR.png").convert_alpha()
+        self.bullet = []
+        self.rate = 200
+        
+        self.backgroundNum = 1
     
     def updateHighScore(self):
         scr_list = []
@@ -228,6 +239,13 @@ class AmeJump:
         for x in range(80):
             pygame.draw.line(self.screen, (222,222,222), (x * 12, 0), (x * 12, 600))
             pygame.draw.line(self.screen, (222,222,222), (0, x * 12), (800, x * 12))
+            
+    def drawBackground(self):    
+        if self.backgroundNum == -1:
+            self.drawGrid()  
+        else:
+            self.bgIMG = pygame.image.load("assets/bg" + str(self.backgroundNum) + ".jpg").convert_alpha()
+            self.screen.blit(self.bgIMG, (0, 0))
     
     def drawDoggo(self):
         if self.score % 5000 == 0 and not self.score % 3000 == 0 and not self.score == 0 and self.dogStatus:
@@ -247,9 +265,30 @@ class AmeJump:
                 self.doggos[len(self.doggos) - 1][0] += 5
                 
             player = pygame.Rect(self.playerx, self.playery, self.playerRight.get_width() - 8, self.playerRight.get_height())
-            rect = pygame.Rect(self.doggos[len(self.doggos) - 1][0], self.doggos[len(self.doggos) - 1][1], self.doggo.get_width(), self.doggo.get_height())
+            rect = pygame.Rect(self.doggos[len(self.doggos) - 1][0] + 3, self.doggos[len(self.doggos) - 1][1] + 3, self.doggo.get_width() - 3, self.doggo.get_height() - 3)
             if rect.colliderect(player):
                 self.gameover = True
+    
+    def drawBullet(self):
+        if self.score >= 10000:
+            self.rate = max(10, 200 - (self.score - 10000)// 1000)
+            if random.randint(1, self.rate) == 1:
+                if random.randint(1,2) == 1:
+                    self.bullet.append([0, self.cameray + random.randint(1, 600), 1])
+                else:
+                    self.bullet.append([800, self.cameray + random.randint(1, 600), 2])
+            if len(self.bullet) > 0:
+                for b in self.bullet:
+                    if b[-1] == 1:
+                        self.screen.blit(self.bulletR, [b[0], b[1] - self.cameray])
+                        b[0] += 5
+                    else:
+                        self.screen.blit(self.bulletL, [b[0], b[1] - self.cameray])
+                        b[0] -= 5
+                    player = pygame.Rect(self.playerx, self.playery, self.playerRight.get_width() - 8, self.playerRight.get_height())
+                    rect = pygame.Rect(b[0], b[1], self.bulletL.get_width(), self.bulletL.get_height())
+                    if rect.colliderect(player):
+                        self.gameover = True
     
     def drawGachaBox(self):
         if self.score % 3000 == 0 and not self.score == 0 and self.boxStatus:
@@ -363,7 +402,8 @@ class AmeJump:
         pygame.mixer.music.play(-1)
         self.doggos = []
         self.boxes = []
-        self.life = 2
+        self.bullet = []
+        self.life = 3
         self.cameray = 0
         self.score = 0
         self.springs = []
@@ -391,23 +431,29 @@ class AmeJump:
                 pygame.time.delay(600)
                 self.life -= 1
                 self.doggos = []
-                self.boxes = []
+                self.bullet = []
+                #self.boxes = []
                 self.gameover = False
                 self.gravity = 0
+                for i in range(-1, -100, -1):
+                    if self.platforms[i][1] > self.cameray + 380 and self.platforms[i][2] == 0:
+                        self.playerx = self.platforms[i][0] + 25
+                        break
             elif self.gameover and self.life == 1:
                 self.gachaTicket += self.score // 20000
                 self.updateGachaTicket()
                 self.updateHighScore()   
                 self.game_over()
             else:
-                self.drawGrid()
+                self.drawBackground()
                 self.drawPlatforms()
                 self.updatePlayer()
                 self.updatePlatforms()
                 self.drawDoggo()
                 self.drawGachaBox()
-                self.screen.blit(self.font.render("Score: " + str(self.score), -1, (0, 0, 0)), (25, 25))
-                self.screen.blit(self.font.render("Life: " + str(self.life), -1, (0, 0, 0)), (25, 50))
+                self.drawBullet()
+                self.screen.blit(self.font.render(" Score: " + str(self.score), -1, (0, 0, 0), (255, 255, 255)), (25, 25))
+                self.screen.blit(self.font.render(" Life: " + str(self.life), -1, (0, 0, 0), (255, 255, 255)), (25, 50))
             pygame.display.flip() 
             
     def menu(self):
@@ -422,16 +468,18 @@ class AmeJump:
             self.screen.blit(self.image2, (510, 150))
             self.drawGrid()
             self.image = pygame.image.load("assets/logo.png")
-            self.screen.blit(self.image, (300, 50))
+            self.screen.blit(self.image, (300, 10))
             clock.tick(60)
             if self.startBTN.draw(self.screen):
-                self.run()
+                self.select()
             if self.tutoBTN.draw(self.screen):
                 self.tutorials()
             if self.highscoreBTN.draw(self.screen):
                 self.highscoreDisplay()
             if self.gachaBTN.draw(self.screen):
                 self.gachaPage()
+            if self.creditBTN.draw(self.screen):
+                self.creditPage()
             if self.quitBTN.draw(self.screen):
                 sys.exit()
                 
@@ -443,6 +491,46 @@ class AmeJump:
                     if event.key == pygame.K_s:
                         self.run()
             pygame.display.update()
+    
+    def select(self):
+        clock = pygame.time.Clock()
+        while True: 
+            self.screen.fill((255, 255, 255))
+            self.drawGrid()
+            clock.tick(60)
+            self.text = self.font1.render("SELECTING", True, (0, 0, 0))
+            self.screen.blit(self.text, (400 - self.text.get_width()/2, 100 // 2)) 
+            num = []
+            with open('data/gacha.txt','r') as f:
+                for tck in f.read().splitlines():
+                    num.append(int(tck))
+            for i in range(len(num)):
+                if num[i] == 0:
+                    self.image = pygame.image.load("gacha_img/LOCKED.png").convert_alpha()
+                    self.screen.blit(self.image, (30 + 150 * i, 250))
+                else:
+                    self.image = pygame.image.load("gacha_img/" + str(i+1) + ".png").convert_alpha()
+                    self.screen.blit(self.image, (30 + 150 * i, 250))
+                    rect = pygame.Rect(30 + 150 * i, 250, self.image.get_width(), self.image.get_height())
+                    pos = pygame.mouse.get_pos()
+                    if rect.collidepoint(pos):
+                        for event in pygame.event.get():
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                self.backgroundNum = i + 1
+                                self.run()
+            if self.skipBTN.draw(self.screen):
+                self.backgroundNum = -1
+                self.run()
+            if self.backBTN.draw(self.screen):
+                self.menu()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_b:
+                        self.menu()
+            pygame.display.update() 
     
     def tutorials(self):
         clock = pygame.time.Clock()
@@ -577,7 +665,25 @@ class AmeJump:
                     if event.key == pygame.K_b:
                         self.menu()
             pygame.display.update()
-            
+    
+    def creditPage(self):
+        clock = pygame.time.Clock()
+        self.credit = pygame.image.load("assets/credit.png").convert_alpha()
+        while True: 
+            self.screen.fill((255, 255, 255))
+            self.drawGrid()
+            self.screen.blit(self.credit, (10, 10))
+            clock.tick(60)
+            if self.backBTN.draw(self.screen):
+                self.menu()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_b:
+                        self.menu()
+            pygame.display.update()        
             
 ######################            
 AmeJump().menu()
