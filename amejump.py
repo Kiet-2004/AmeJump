@@ -324,7 +324,10 @@ class AmeJump:
                 self.screen.blit(self.rickRolled, (0, 0))
                 clock.tick(60)
                 if self.continue1BTN.draw(self.screen):
-                    pygame.mixer.music.load("sound/game.mp3")
+                    if self.backgroundNum == -1:
+                        pygame.mixer.music.load("sound/game.mp3")
+                    else:
+                        pygame.mixer.music.load("sound/bgm" + str(self.backgroundNum) + ".mp3")
                     pygame.mixer.music.play(-1)
                     self.paused = False
                 for event in pygame.event.get():
@@ -333,7 +336,10 @@ class AmeJump:
                         sys.exit()
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_c:
-                            pygame.mixer.music.load("sound/game.mp3")
+                            if self.backgroundNum == -1:
+                                pygame.mixer.music.load("sound/game.mp3")
+                            else:
+                                pygame.mixer.music.load("sound/bgm" + str(self.backgroundNum) + ".mp3")
                             pygame.mixer.music.play(-1)
                             self.paused = False
                 pygame.display.update()
@@ -379,7 +385,7 @@ class AmeJump:
             self.screen.blit(self.text, (400 - self.text.get_width()/2, 400 // 2))
             if self.restartBTN.draw(self.screen):
                 self.gameover = False
-                self.run()
+                self.select()
             if self.menuBTN.draw(self.screen):
                 self.gameover = False
                 self.menu()
@@ -398,7 +404,10 @@ class AmeJump:
                               
     def run(self):
         clock = pygame.time.Clock()
-        pygame.mixer.music.load("sound/game.mp3")
+        if self.backgroundNum == -1:
+            pygame.mixer.music.load("sound/game.mp3")
+        else:
+            pygame.mixer.music.load("sound/bgm" + str(self.backgroundNum) + ".mp3")
         pygame.mixer.music.play(-1)
         self.doggos = []
         self.boxes = []
