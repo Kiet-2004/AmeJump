@@ -420,6 +420,7 @@ class AmeJump:
         self.generatePlatforms()
         self.playerx = 400
         self.playery = 375
+        self.rate = 200
         while True:
             self.screen.fill((255,255,255))
             clock.tick(60)
