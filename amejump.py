@@ -4,6 +4,7 @@ import sys
 import random
 from pygame import mixer
 
+#Creating a class for button to setup the ui for player
 class Button():
     def __init__(self, x, y, image, scale, text):
         self.width = image.get_width()
@@ -15,7 +16,8 @@ class Button():
         self.text = self.font.render(text, True, (0, 0, 0))
         self.rect1 = self.text.get_rect()
         self.rect1.center = (x, y)
-
+    
+    #Including drawing the button and clicking the button
     def draw(self, surface):
         action = False
         pos = pygame.mouse.get_pos()
@@ -29,8 +31,10 @@ class Button():
         surface.blit(self.text, (self.rect1.x + self.width / 2, self.rect1.y + self.height / 2))
         return action
 
+#Main game    
 class AmeJump:
     def __init__(self):
+        #Screen display
         self.screen = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("AmeJump")
         pygame_icon = pygame.image.load("assets/left_1.png")
@@ -38,6 +42,8 @@ class AmeJump:
         self.green = pygame.image.load("assets/green.png").convert_alpha()
         pygame.font.init()
         pygame.mixer.init()
+        
+        #Basic doodle jump attributes
         self.score = 0
         self.font = pygame.font.Font("font/DoodleJump.ttf", 25)
         self.blue = pygame.image.load("assets/blue.png").convert_alpha()
@@ -59,9 +65,12 @@ class AmeJump:
         self.gravity = 0
         self.xmovement = 0
         self.gameover = False
+        
+        #Loading button image and font for button
         self.font1 = pygame.font.Font("font/DoodleJump.ttf", 105)
         self.buttonIMG = pygame.image.load("assets/menu_unselected.png").convert_alpha()
         
+        #Menu button
         self.startBTN = Button(320, 220, self.buttonIMG, 1, "START")
         self.tutoBTN = Button(320, 280, self.buttonIMG, 1, "HOW TO PLAY")
         self.highscoreBTN = Button(320, 340, self.buttonIMG, 1, "HIGHSCORE")
@@ -69,17 +78,23 @@ class AmeJump:
         self.creditBTN = Button(320, 460, self.buttonIMG, 1, "CREDITS")
         self.quitBTN = Button(320, 520, self.buttonIMG, 1, "QUIT")
         
+        #Pause menu
         self.menuBTN = Button(320, 360, self.buttonIMG, 1, "MENU")
         self.restartBTN = Button(320, 280, self.buttonIMG, 1, "RESTART")
         self.continueBTN = Button(320, 280, self.buttonIMG, 1, "CONTINUE")
+        
+        #For Amerolled
         self.continue1BTN = Button(320, 540, self.buttonIMG, 1, "CONTINUE")
         
+        #Gacha system
         self.rollBTN = Button(320, 420, self.buttonIMG, 1, "ROLL")
         self.galleryBTN = Button(320, 480, self.buttonIMG, 1, "GALLERY")
         self.backBTN = Button(320, 540, self.buttonIMG, 1, "BACK")
         
+        #For selecting page 
         self.skipBTN = Button(320, 480, self.buttonIMG, 1, "SKIP")
         
+        #Adding more attributes to the game
         self.doggo = pygame.image.load("assets/doggo.png").convert_alpha()
         self.doggos = []
         self.life = 1
@@ -95,8 +110,10 @@ class AmeJump:
         self.bullet = []
         self.rate = 200
         
+        #For selecting background
         self.backgroundNum = 1
     
+    #Update highscore into a txt file
     def updateHighScore(self):
         scr_list = []
         with open('data/highscore.txt','r') as f:
@@ -111,7 +128,8 @@ class AmeJump:
         with open('data/highscore.txt', 'w') as f:        
             for scr in scr_list:
                 f.write(str(scr) + "\n")
-                
+    
+    #Update gacha tickets into a txt file
     def updateGachaTicket(self):
         num = 0
         with open('data/gacha_ticket.txt','r') as f:
@@ -119,7 +137,8 @@ class AmeJump:
                 num += int(tck) + self.gachaTicket
         with open('data/gacha_ticket.txt', 'w') as f:
             f.write(str(num) + "\n") 
-        
+    
+    #Movement of the player frame by frame
     def updatePlayer(self):
         if not self.jump:        
             self.playery += self.gravity
@@ -159,7 +178,8 @@ class AmeJump:
                 self.screen.blit(self.playerLeft_1, (self.playerx, self.playery - self.cameray))
             else:
                 self.screen.blit(self.playerLeft, (self.playerx, self.playery - self.cameray))
-
+    
+    #Update the movement of the platforms
     def updatePlatforms(self):
         for p in self.platforms:
             rect = pygame.Rect(p[0], p[1], self.green.get_width() - 5, 12)
@@ -182,7 +202,8 @@ class AmeJump:
                     p[0] -= 5
                     if p[0] <= 0:
                         p[-1] = 1
-
+    
+    #Creating new platforms
     def drawPlatforms(self):
         for p in self.platforms:
             check = self.platforms[1][1] - self.cameray
@@ -221,6 +242,7 @@ class AmeJump:
                 self.jump = 30
                 self.cameray -= 30
     
+    #Initialize the platforms at the beginning of the game
     def generatePlatforms(self):
         on = 600
         while on > -100:
@@ -234,12 +256,13 @@ class AmeJump:
                 platform = 2   
             self.platforms.append([x, on, platform, 0])
             on -= 50
-
+    
+    #Just like the name of the function
     def drawGrid(self):
         for x in range(80):
             pygame.draw.line(self.screen, (222,222,222), (x * 12, 0), (x * 12, 600))
             pygame.draw.line(self.screen, (222,222,222), (0, x * 12), (800, x * 12))
-            
+    
     def drawBackground(self):    
         if self.backgroundNum == -1:
             self.drawGrid()  
@@ -247,6 +270,7 @@ class AmeJump:
             self.bgIMG = pygame.image.load("assets/bg" + str(self.backgroundNum) + ".jpg").convert_alpha()
             self.screen.blit(self.bgIMG, (0, 0))
     
+    #Adding the dog moving to the left and right 
     def drawDoggo(self):
         if self.score % 5000 == 0 and not self.score % 3000 == 0 and not self.score == 0 and self.dogStatus:
             self.doggos.append([random.randint(100, 700), self.cameray, False])
@@ -269,6 +293,7 @@ class AmeJump:
             if rect.colliderect(player):
                 self.gameover = True
     
+    #Adding some bullets which will randomly appear from the left or right. Its rate will be increasing as your score increases
     def drawBullet(self):
         if self.score >= 10000:
             self.rate = max(10, 200 - (self.score - 10000)// 1000)
@@ -290,6 +315,7 @@ class AmeJump:
                     if rect.colliderect(player):
                         self.gameover = True
     
+    #Creating mysterious boxes 
     def drawGachaBox(self):
         if self.score % 3000 == 0 and not self.score == 0 and self.boxStatus:
             self.boxes.append([random.randint(100, 700), self.cameray])
@@ -313,7 +339,8 @@ class AmeJump:
                 else:
                     self.score += 500
                 self.boxes.pop(len(self.boxes) - 1)
-           
+    
+    #Distracting player
     def gotAmeRolled(self):
         if not self.gameover:
             clock = pygame.time.Clock()     
@@ -343,7 +370,8 @@ class AmeJump:
                             pygame.mixer.music.play(-1)
                             self.paused = False
                 pygame.display.update()
-                
+    
+    #For pausing the game
     def pause(self):
         if not self.gameover:
             clock = pygame.time.Clock()                
@@ -370,7 +398,8 @@ class AmeJump:
                             self.gameover = False
                             self.menu()   
                 pygame.display.update() 
-                
+    
+    #For the game over screen
     def game_over(self):
         clock = pygame.time.Clock()
         pygame.mixer.music.load("sound/gameover.mp3")
@@ -401,7 +430,7 @@ class AmeJump:
                         self.menu()
             pygame.display.update()
             
-                              
+    #Main game
     def run(self):
         clock = pygame.time.Clock()
         if self.backgroundNum == -1:
@@ -465,7 +494,8 @@ class AmeJump:
                 self.screen.blit(self.font.render(" Score: " + str(self.score), -1, (0, 0, 0), (255, 255, 255)), (25, 25))
                 self.screen.blit(self.font.render(" Life: " + str(self.life), -1, (0, 0, 0), (255, 255, 255)), (25, 50))
             pygame.display.flip() 
-            
+    
+    #Menu of the game
     def menu(self):
         clock = pygame.time.Clock()
         pygame.mixer.music.load("sound/menu.mp3")
@@ -502,6 +532,7 @@ class AmeJump:
                         self.run()
             pygame.display.update()
     
+    #Selecting background
     def select(self):
         clock = pygame.time.Clock()
         while True: 
@@ -542,6 +573,7 @@ class AmeJump:
                         self.menu()
             pygame.display.update() 
     
+    #How to play the game
     def tutorials(self):
         clock = pygame.time.Clock()
         self.tuto = pygame.image.load("assets/tutorials.png").convert_alpha()
@@ -560,7 +592,8 @@ class AmeJump:
                     if event.key == pygame.K_b:
                         self.menu()
             pygame.display.update()
-            
+    
+    #See your highscore here
     def highscoreDisplay(self):
         clock = pygame.time.Clock()
         while True: 
@@ -588,7 +621,8 @@ class AmeJump:
                     if event.key == pygame.K_b:
                         self.menu()
             pygame.display.update()
-            
+    
+    #For gacha page where you use the gacha ticket to have some valuable stuff
     def gachaPage(self):
         self.image = pygame.image.load("gacha_img/LOCKED.png").convert_alpha()
         self.text2 = self.font1.render("", True, (0, 0, 0))
@@ -643,7 +677,8 @@ class AmeJump:
                     if event.key == pygame.K_b:
                         self.menu()
             pygame.display.update()
-            
+    
+    #For displaying what you've got from gacha store
     def gallery(self):
         clock = pygame.time.Clock()
         while True: 
@@ -662,9 +697,7 @@ class AmeJump:
                     self.screen.blit(self.image, (30 + 150 * i, 250))
                 else:
                     self.image = pygame.image.load("gacha_img/" + str(i+1) + ".png").convert_alpha()
-                    self.screen.blit(self.image, (30 + 150 * i, 250))
-            
-                     
+                    self.screen.blit(self.image, (30 + 150 * i, 250)) 
             if self.backBTN.draw(self.screen):
                 self.gachaPage()
             for event in pygame.event.get():
@@ -676,6 +709,7 @@ class AmeJump:
                         self.menu()
             pygame.display.update()
     
+    #For credit page
     def creditPage(self):
         clock = pygame.time.Clock()
         self.credit = pygame.image.load("assets/credit.png").convert_alpha()
@@ -695,5 +729,6 @@ class AmeJump:
                         self.menu()
             pygame.display.update()        
             
-######################            
+######################    
+#Let's run the game
 AmeJump().menu()
